@@ -1,0 +1,89 @@
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WebGPU Life</title>
+  </head>
+  <body>
+    <canvas width="512" height="512"></canvas>
+    <script type="module">
+        const canvas = document.querySelector("canvas"); // selects canvas for rendering
+        if (!navigator.gpu) {// checks if the browser has webGPU support
+            throw new Error("WebGPU not supported on this browser.");
+        }
+        const adapter = await navigator.gpu.requestAdapter(); // get the system GPU driver's abstraction
+        if (!adapter) {
+            throw new Error("No appropriate GPUAdapter found.");
+        }
+        const device = await adapter.requestDevice(); // requests access to the system's GPU
+        const context = canvas.getContext("webgpu"); // gets the canvas's webGPU properties
+
+        const canvasFormat = navigator.gpu.getPreferredCanvasFormat(); // Navigator.gpu is the object which has data about the GPU, handled by the browser
+
+        context.configure({ // sets the device and preferred canvas format
+            device: device,
+            format: canvasFormat,
+        });
+
+        const encoder = device.createCommandEncoder(); // the thing that converts commands to GPU commands
+        const pass = encoder.beginRenderPass({ // render pass = what happens every frame
+            colorAttachments: [{
+                view: context.getCurrentTexture().createView(),
+                loadOp: "clear", // clears when the frame starts
+                clearValue: { r: 0, g: 0, b: 0.4, a: 1 }, // color value which is the "blank" color of the canvas
+                storeOp: "store", // stores it to the framebuffer???
+            }]
+        });
+        pass.end(); // finishes the render pass???
+        const commandBuffer = encoder.finish(); // buffer of commands that is run on the GPU
+        device.queue.submit([commandBuffer]); // sends the commands to the GPU device
+
+
+        const vertices = new Float32Array([
+            //   X,    Y,
+            -0.8, -0.8, // Triangle 1 (Blue)
+            0.8, -0.8,
+            0.8,  0.8,
+
+            -0.8, -0.8, // Triangle 2 (Red)
+            0.8,  0.8,
+            -0.8,  0.8,
+        ]); // DEFINES THE TWO TRIANGLES REQUIRED TO DRAW A GRID SQUARE
+        const vertexBuffer = device.createBuffer({
+            label: "Cell vertices",
+            size: vertices.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        const GRID_SIZE = 4;
+        const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
+        const uniformBuffer = device.createBuffer({
+            label: "Grid Uniforms",
+            size: uniformArray.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(uniformBuffer, 0, uniformArray); 
+        
+
+
+    </script>
+  </body>
+</html>
